@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="l10n_in_extend_report_invoice_document_inherit" inherit_id="account.report_invoice_document">
+        
+        <xpath expr="//table[@name='invoice_line_table']" position="before">
+          <t t-if="o.company_id.country_id.code == 'IN'">
+            <t t-set="invoice_tax_details" t-value="o.env['account.edi.format']._l10n_in_prepare_edi_tax_details(invoice=o, in_foreign=True).get('invoice_tax_details', {})"/>
+            <t t-set="invoice_line_tax_details" t-value="invoice_tax_details.get('invoice_line_tax_details',{})"/>
+            <t t-set="first_line" t-value="o.invoice_line_ids.filtered(lambda l: l.account_id)[0]"/>
+            <t t-set="first_line_tax_details" t-value="(invoice_line_tax_details and first_line) and invoice_line_tax_details[first_line[0]] or {}"/>
+            <t t-set="have_sgst" t-value="'sgst' in first_line_tax_details"/>
+            <t t-set="have_cgst" t-value="'cgst' in first_line_tax_details"/>
+            <t t-set="have_igst" t-value="'igst' in first_line_tax_details"/>
+            <t t-set="have_cess" t-value="'cess' in first_line_tax_details and 'cess_non_advol' in first_line_tax_details"/>
+            <t t-set="amount_sign" t-value="o.is_inbound() and -1 or 1"/>
+          </t>
+        </xpath>
+        
+        <xpath expr="//table[@name='invoice_line_table']//th[@t-if='display_discount']" position="after">
+          <t t-if="o.company_id.country_id.code == 'IN'">
+            <th t-if="have_sgst" class="text-right">SGST</th>
+            <th t-if="have_cgst" class="text-right">CGST</th>
+            <th t-if="have_igst" class="text-right">IGST</th>
+            <th t-if="have_cess" class="text-right">CESS</th>
+          </t>
+        </xpath>
+        
+        <xpath expr="//t[@name='account_invoice_line_accountable']//td[@t-if='display_discount']" position="after">
+          <t t-if="o.company_id.country_id.code == 'IN'">
+            <t t-set="line_tax_details" t-value="invoice_line_tax_details.get(line, {})"/>
+            <td t-if="have_sgst" class="text-right">
+              <span class="text-nowrap" t-esc="line_tax_details.get('sgst', 0.0) * amount_sign" 
+                t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/>
+            </td>
+            <td t-if="have_cgst" class="text-right">
+              <span class="text-nowrap" t-esc="line_tax_details.get('cgst', 0.0) * amount_sign" 
+                t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/>
+            </td>
+            <td t-if="have_igst" class="text-right">
+              <span class="text-nowrap" t-esc="line_tax_details.get('igst', 0.0) * amount_sign" 
+                t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/>
+            </td>
+            <td t-if="have_cess" class="text-right">
+              <span class="text-nowrap" t-esc="(line_tax_details.get('cess', 0.0) + line_tax_details.get('cess_non_advol', 0.0)) * amount_sign" 
+                t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/>
+            </td>
+          </t>
+        </xpath>
+      </template>
+</odoo>

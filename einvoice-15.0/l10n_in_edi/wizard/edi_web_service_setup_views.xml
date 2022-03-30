@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <record id="l10n_in_edi_web_service_setup_wizard" model="ir.ui.view">
+        <field name="name">l10n.in.edi.web.service.setup.wizard.form</field>
+        <field name="model">l10n.in.edi.web.service.setup.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <group>
+                        <field name="company_id" groups="base.group_no_one"/>
+                        <field name="l10n_in_edi_username"/>
+                        <field name="l10n_in_edi_password" password="True"/>
+                    </group>
+                </group>
+
+                <footer>
+                    <button string="Setup" class="oe_highlight" type="object" name="setup_web_service"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

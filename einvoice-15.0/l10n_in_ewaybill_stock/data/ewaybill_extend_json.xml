@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="l10n_in_ewaybill_extend_stock_json" inherit_id="l10n_in_ewaybill.l10n_in_ewaybill_extend_json" primary="True">
+        <xpath expr="//t[@t-set='document']" position="attributes">
+            <attribute name="t-value">picking</attribute>
+        </xpath>
+    </template>
+</odoo>

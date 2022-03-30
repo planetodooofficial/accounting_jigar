@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_inherit_l10n_in_edi" model="ir.ui.view">
+        <field name="name">res.config.settings.form.inherit.l10n_in_edi</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="iap.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <div id="iap_portal" position="inside">
+                <div class='row mt16 o_settings_container' name="l10n_in_edi_iap" attrs="{'invisible': [('country_code', '!=', 'IN')]}">
+                    <div class="col-12 col-lg-6 o_setting_box" id="l10n_in_edi_iap_setup">
+                        <div class='o_setting_right_pane'>
+                            <div class="o_form_label">
+                            Indian E-invoice IAP
+                            <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." aria-label="Values set here are company-specific." groups="base.group_multi_company" role="img"/>
+                            </div>
+                            <div class="text-muted">
+                                Setup E-invoice IAP Service for this company
+                            </div>
+                            <div class='mt8'>
+                                <button name="l10n_in_edi_setup" icon="fa-arrow-right" type="object" string="Setup" class="btn-link"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </field>
+    </record>
+</odoo>

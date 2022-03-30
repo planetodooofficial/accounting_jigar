@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="l10n_in_ewaybill_generate_json">
+    {
+        <t t-if="move.is_purchase_document(include_receipts=True)">
+            <t t-set="seller_details" t-value="move.partner_id"/>
+            <t t-set="dispatch_details" t-value="'partner_shipping_id' in move and move.partner_shipping_id or move.partner_id"/>
+            <t t-set="buyer_details" t-value="move.journal_id.company_id.partner_id"/>
+            <t t-set="ship_to_details" t-value="move.company_shipping_id or buyer_details"/>
+        </t>
+        <t t-else="">
+            <t t-set="seller_details" t-value="move.journal_id.company_id.partner_id"/>
+            <t t-set="dispatch_details" t-value="move.company_shipping_id or seller_details"/>
+            <t t-set="buyer_details" t-value="move.partner_id"/>
+            <t t-set="ship_to_details" t-value="'partner_shipping_id' in move and move.partner_shipping_id or move.partner_id"/>
+        </t>
+        <t t-set="invoice_line_tax_details" t-value="invoice_tax_details.get('invoice_line_tax_details')"/>
+        <t t-set="amount_sign" t-value="move.is_inbound() and -1 or 1"/>
+
+        "supplyType": "<t t-esc="('in_' in move.move_type) and 'I' or 'O'"/>",
+        "subSupplyType": "<t t-esc="move.l10n_in_ewaybill_subtype_id.code"/>",
+        <t t-if="move.l10n_in_ewaybill_sub_supply_desc">
+            "subSupplyDesc": "<t t-esc="move.l10n_in_ewaybill_sub_supply_desc"/>",
+        </t>
+        "docType": "<t t-esc="move.l10n_in_ewaybill_type_id.code"/>",
+        "docNo": "<t t-esc="move.is_purchase_document(include_receipts=True) and move.ref or move.name"/>",
+        "docDate": "<t t-esc="move.date.strftime('%d/%m/%Y')"/>",
+
+        "fromGstin": "<t t-esc="seller_details.commercial_partner_id.vat or 'URP'"/>",
+        "fromTrdName": "<t t-esc="seller_details.commercial_partner_id.name"/>",
+        "fromStateCode": <t t-esc="int(seller_details.state_id.l10n_in_tin)"/>,
+        <t t-if="dispatch_details.street">
+            "fromAddr1": "<t t-esc="dispatch_details.street"/>",
+        </t>
+        <t t-if="dispatch_details.street2">
+            "fromAddr2": "<t t-esc="dispatch_details.street2"/>",
+        </t>
+        <t t-if="dispatch_details.city">
+            "fromPlace": "<t t-esc="dispatch_details.city"/>",
+        </t>
+        "fromPincode": <t t-esc="dispatch_details.zip"/>,
+        "actFromStateCode": <t t-esc="int(dispatch_details.state_id.l10n_in_tin)"/>,
+        <t t-if="move.l10n_in_ewaybill_transaction_type in ('3', '4')">
+            "dispatchFromGSTIN": "<t t-esc="dispatch_details.commercial_partner_id.vat"/>",
+            "dispatchFromTradeName": "<t t-esc="dispatch_details.commercial_partner_id.name"/>",
+        </t>
+
+        "toGstin": "<t t-esc="buyer_details.commercial_partner_id.vat or 'URP'"/>",
+        "toTrdName": "<t t-esc="buyer_details.commercial_partner_id.name"/>",
+        "toStateCode": <t t-esc="int(buyer_details.state_id.l10n_in_tin)"/>,
+        <t t-if="ship_to_details.street">
+            "toAddr1": "<t t-esc="ship_to_details.street"/>",
+        </t>
+        <t t-if="ship_to_details.street2">
+            "toAddr2": "<t t-esc="ship_to_details.street2"/>",
+        </t>
+        <t t-if="ship_to_details.city">
+            "toPlace": "<t t-esc="ship_to_details.city"/>",
+        </t>
+        "toPincode": <t t-esc="ship_to_details.zip"/>,
+        "actToStateCode": <t t-esc="int(ship_to_details.state_id.l10n_in_tin)"/>,
+        <t t-if="move.l10n_in_ewaybill_transaction_type in ('2', '4')">
+            "shipToGSTIN": "<t t-esc="ship_to_details.commercial_partner_id.vat"/>",
+            "shipToTradeName": "<t t-esc="ship_to_details.commercial_partner_id.name"/>",
+        </t>
+        "transactionType": <t t-esc="move.l10n_in_ewaybill_transaction_type"/>,
+
+        <t t-set="amount_untaxed" t-value="0.00"/>
+        <t t-set="cgst_value" t-value="0.00"/>
+        <t t-set="sgst_value" t-value="0.00"/>
+        <t t-set="igst_value" t-value="0.00"/>
+        <t t-set="cess_value" t-value="0.00"/>
+        <t t-set="cess_non_advol_value" t-value="0.00"/>
+        <t t-set="other_value" t-value="0.00"/>
+        <t t-set="amount_total" t-value="0.00"/>
+        <t t-set="lines" t-value="move.invoice_line_ids"/>
+
+        "itemList": [
+        <t t-foreach="lines" t-as="line">
+            <t t-set="tax_details" t-value="invoice_line_tax_details.get(line,{})"/>
+            {
+                "productName": "<t t-esc="line.product_id.name"/>",
+                "hsnCode": <t t-esc="line.product_id.l10n_in_hsn_code"/>,
+                "productDesc": "<t t-esc="line.name"/>",
+                "quantity": <t t-esc="line.quantity"/>,
+                "qtyUnit": "<t t-esc="line.product_uom_id.l10n_in_code and line.product_id.uom_id.l10n_in_code.split('-')[0] or 'OTH'"/>",
+                "taxableAmount": <t t-esc="round(line.balance * amount_sign, 2)"/>,
+                <t t-if="'igst' in tax_details">
+                    "igstRate": <t t-esc="round(tax_details.get('gst_rate', 0.00), 2)"/>,
+                </t>
+                <t t-else="">
+                    "sgstRate": <t t-esc="round(tax_details.get('gst_rate', 0.00) / 2, 2)"/>,
+                    "cgstRate": <t t-esc="round(tax_details.get('gst_rate', 0.00) / 2, 2)"/>,
+                </t>
+                "cessRate": <t t-esc="round(tax_details.get('cess_rate', 0.00), 2)"/>
+                <t t-set="amount_untaxed" t-value="amount_untaxed + line.balance"/>
+                <t t-set="cgst_value" t-value="cgst_value + tax_details.get('cgst', 0.0)"/>
+                <t t-set="sgst_value" t-value="sgst_value + tax_details.get('sgst', 0.0)"/>
+                <t t-set="igst_value" t-value="igst_value + tax_details.get('igst', 0.0)"/>
+                <t t-set="cess_value" t-value="cess_value + tax_details.get('cess', 0.0)"/>
+                <t t-set="cess_non_advol_value" t-value="cess_non_advol_value + tax_details.get('cess_non_advol', 0.0)"/>
+                <t t-set="other_value" t-value="other_value + tax_details.get('other', 0.0)"/>
+                <t t-set="amount_total" t-value="amount_total + (line.balance + tax_details.get('tax_amount_currency',0.00))"/>
+            },
+        </t>
+        ],
+        "totalValue": <t t-esc="round(amount_untaxed * amount_sign, 2)"/>,
+        "cgstValue": <t t-esc="round(cgst_value * amount_sign, 2)"/>,
+        "sgstValue": <t t-esc="round(sgst_value * amount_sign, 2)"/>,
+        "igstValue": <t t-esc="round(igst_value * amount_sign, 2)"/>,
+        "cessValue": <t t-esc="round(cess_value * amount_sign, 2)"/>,
+        "cessNonAdvolValue": <t t-esc="round(cess_non_advol_value * amount_sign, 2)"/>,
+        "otherValue": <t t-esc="round(other_value * amount_sign, 2)"/>,
+        "totInvValue": <t t-esc="round(amount_total * amount_sign, 2)"/>,
+
+        "transDistance": "<t t-esc="move.l10n_in_ewaybill_distance or 0"/>",
+        <t t-if="move.l10n_in_ewaybill_mode and move.l10n_in_ewaybill_mode != '0'">
+            "transMode": "<t t-esc="move.l10n_in_ewaybill_mode"/>",
+        </t>
+        <t t-if="move.l10n_in_ewaybill_mode == '0'">
+            "transporterId": "<t t-esc="move.l10n_in_ewaybill_transporter_id.vat"/>",
+        </t>
+        <t t-if="move.l10n_in_ewaybill_mode == '0' and move.l10n_in_ewaybill_transporter_id">
+            "transporterName": "<t t-esc="move.l10n_in_ewaybill_transporter_id.name"/>",
+        </t>
+        <t t-if="move.l10n_in_ewaybill_mode in ('2', '3', '4') and move.l10n_in_ewaybill_transporter_doc_no">
+            "transDocNo": "<t t-esc="move.l10n_in_ewaybill_transporter_doc_no"/>",
+        </t>
+        <t t-if="move.l10n_in_ewaybill_mode in ('2', '3', '4') and move.l10n_in_ewaybill_transporter_doc_date">
+            "transDocDate": "<t t-esc="move.l10n_in_ewaybill_transporter_doc_date.strftime('%d/%m/%Y')"/>",
+        </t>
+        <t t-if="move.l10n_in_ewaybill_mode == '1' and move.l10n_in_ewaybill_vehicle_no">
+            "vehicleNo": "<t t-esc="move.l10n_in_ewaybill_vehicle_no"/>",
+        </t>
+        <t t-if="move.l10n_in_ewaybill_mode == '1' and move.l10n_in_ewaybill_vehicle_type">
+            "vehicleType": "<t t-esc="move.l10n_in_ewaybill_vehicle_type"/>",
+        </t>
+    }
+    </template>
+</odoo>
